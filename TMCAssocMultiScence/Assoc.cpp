@@ -32,6 +32,7 @@ Assoc::Assoc(const Assoc& orig)
 
 Assoc::~Assoc()
 {    
+    if (m_p != NULL)delete[] m_p;
 }
 
 int Assoc::Process()
