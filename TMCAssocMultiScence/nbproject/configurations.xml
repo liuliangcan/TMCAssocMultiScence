@@ -17,11 +17,26 @@
       <itemPath>tools/toolkit.h</itemPath>
     </logicalFolder>
     <logicalFolder name="HeaderFiles" displayName="头文件" projectFiles="true">
+      <itemPath>Assoc.h</itemPath>
+      <itemPath>AssocFiles.h</itemPath>
+      <itemPath>BinFilesReader.h</itemPath>
+      <itemPath>DataDefine.h</itemPath>
+      <itemPath>FilesMemoryManager.h</itemPath>
+      <itemPath>GlobalConfiger.h</itemPath>
+      <itemPath>OutPutCSVFiles.h</itemPath>
+      <itemPath>ThreadManager.h</itemPath>
     </logicalFolder>
     <logicalFolder name="SourceFiles" displayName="源文件" projectFiles="true">
+      <itemPath>Assoc.cpp</itemPath>
+      <itemPath>BinFilesReader.cpp</itemPath>
+      <itemPath>FilesMemoryManager.cpp</itemPath>
+      <itemPath>GlobalConfiger.cpp</itemPath>
+      <itemPath>OutPutCSVFiles.cpp</itemPath>
+      <itemPath>ThreadManager.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles" displayName="资源文件" projectFiles="true">
+      <itemPath>AssocMultiScenceConf.xml</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="测试文件"
@@ -42,12 +57,47 @@
   <confs>
     <conf name="Debug" type="1">
       <toolsSet>
-        <compilerSet>default</compilerSet>
+        <compilerSet>GNU|GNU</compilerSet>
         <dependencyChecking>true</dependencyChecking>
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
       <compileType>
+        <linkerTool>
+          <linkerLibItems>
+            <linkerLibStdlibItem>PosixThreads</linkerLibStdlibItem>
+          </linkerLibItems>
+        </linkerTool>
       </compileType>
+      <item path="Assoc.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="Assoc.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="AssocFiles.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="AssocMultiScenceConf.xml" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="BinFilesReader.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="BinFilesReader.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="DataDefine.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="FilesMemoryManager.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="FilesMemoryManager.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="GlobalConfiger.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="GlobalConfiger.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="OutPutCSVFiles.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="OutPutCSVFiles.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="ThreadManager.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="ThreadManager.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="tools/Markup.cpp" ex="false" tool="1" flavor2="0">
@@ -97,6 +147,36 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="Assoc.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="Assoc.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="AssocFiles.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="AssocMultiScenceConf.xml" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="BinFilesReader.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="BinFilesReader.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="DataDefine.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="FilesMemoryManager.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="FilesMemoryManager.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="GlobalConfiger.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="GlobalConfiger.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="OutPutCSVFiles.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="OutPutCSVFiles.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="ThreadManager.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="ThreadManager.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="tools/Markup.cpp" ex="false" tool="1" flavor2="0">

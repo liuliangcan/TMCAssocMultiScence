@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+    <!--软采文件输入路径，可配多行-->
+    <AssocMRInputDir name = "./INPUTDIRMR"></AssocMRInputDir>
+    <AssocMRInputDir name = "./INPUTDIRUU"></AssocMRInputDir>
+    <!--场景文件输入路径，仅一行-->
+    <AssocScenceInputDir name = "./INPUTDIRSCENCE"></AssocScenceInputDir>
+    
+    <AssocOutputDir name = "./OUTPUTDIR"></AssocOutputDir>
+    <AssocLogDir name = "./LOGDIR"></AssocLogDir>
+    <AssocBackupDir name = "./BACKUPDIR"></AssocBackupDir>
+    <AssocThreadNum name = "2"></AssocThreadNum>
+    
+    <!--关联时间误差范围，即这个时间距离内允许关联，单位：毫秒ms，不要设置24天(21亿毫秒)以上-->
+    <AssocDeviation name = "3600000"></AssocDeviation>
+    <!--批次处理结束标志文件-->
+    <MultiScenceEndBatchFile name = "./OUTPUTDIR/multiscenceend"></MultiScenceEndBatchFile>
+</root>

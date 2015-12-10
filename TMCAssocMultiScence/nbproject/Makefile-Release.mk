@@ -21,7 +21,7 @@ FC=gfortran
 AS=as
 
 # Macros
-CND_PLATFORM=GNU-Linux-x86
+CND_PLATFORM=None-Linux-x86
 CND_DLIB_EXT=so
 CND_CONF=Release
 CND_DISTDIR=dist
@@ -35,6 +35,12 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 
 # Object Files
 OBJECTFILES= \
+	${OBJECTDIR}/Assoc.o \
+	${OBJECTDIR}/BinFilesReader.o \
+	${OBJECTDIR}/FilesMemoryManager.o \
+	${OBJECTDIR}/GlobalConfiger.o \
+	${OBJECTDIR}/OutPutCSVFiles.o \
+	${OBJECTDIR}/ThreadManager.o \
 	${OBJECTDIR}/main.o \
 	${OBJECTDIR}/tools/Markup.o \
 	${OBJECTDIR}/tools/dir_info.o \
@@ -67,6 +73,36 @@ LDLIBSOPTIONS=
 ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/tmcassocmultiscence: ${OBJECTFILES}
 	${MKDIR} -p ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}
 	${LINK.cc} -o ${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/tmcassocmultiscence ${OBJECTFILES} ${LDLIBSOPTIONS}
+
+${OBJECTDIR}/Assoc.o: Assoc.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/Assoc.o Assoc.cpp
+
+${OBJECTDIR}/BinFilesReader.o: BinFilesReader.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/BinFilesReader.o BinFilesReader.cpp
+
+${OBJECTDIR}/FilesMemoryManager.o: FilesMemoryManager.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/FilesMemoryManager.o FilesMemoryManager.cpp
+
+${OBJECTDIR}/GlobalConfiger.o: GlobalConfiger.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/GlobalConfiger.o GlobalConfiger.cpp
+
+${OBJECTDIR}/OutPutCSVFiles.o: OutPutCSVFiles.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/OutPutCSVFiles.o OutPutCSVFiles.cpp
+
+${OBJECTDIR}/ThreadManager.o: ThreadManager.cpp 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/ThreadManager.o ThreadManager.cpp
 
 ${OBJECTDIR}/main.o: main.cpp 
 	${MKDIR} -p ${OBJECTDIR}
