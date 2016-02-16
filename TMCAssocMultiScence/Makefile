@@ -68,7 +68,8 @@ clean: .clean-post
 
 .clean-post: .clean-impl
 # Add your post 'clean' code here...
-
+	${RM} -r build
+	${RM} -r dist
 
 # clobber
 clobber: .clobber-post

@@ -15,6 +15,7 @@
 #include "FilesMemoryManager.h"
 #include "OutPutCSVFiles.h"
 #include <limits.h>
+#include "tools/macro.h"
 
 using namespace std;
 
@@ -128,7 +129,6 @@ int BinFilesReader::BackupScenceFile()
    char *ptr = strrchr(m_pFiles->ScenceFile.file, '/');
    if(ptr != NULL) 
    {
-       *ptr = 0;
        strcpy(name, ptr + 1);
    }
 
@@ -145,7 +145,7 @@ int BinFilesReader::BackupScenceFile()
         }
     }
      sprintf(dstName, "%s/%s", dstDir ,name);
-     rename(srcName, dstName);
+     RANAME(srcName, dstName);
     return 0;
 }
 int BinFilesReader::BackupMRFile(FAndP* fap)
@@ -156,16 +156,17 @@ int BinFilesReader::BackupMRFile(FAndP* fap)
     char dstFile[PATH_MAX];
     char dayAndHourDir[PATH_MAX];
     
-    char *ptr = strrchr(fap->file, '/');
+    char *ptr = fap->file + strlen(fap->file) - 1;
     char *ptr2 = ptr;
    //拆分文件路径特征
     int count = 0;    
     for(ptr = fap->file + strlen(fap->file) - 1;ptr != fap->file; --ptr)
     {
         if(*ptr == '/')
-        {
+        {            
+        
+        if(ptr != fap->file + strlen(fap->file) - 1 && *(ptr + 1) != '/')
             ++count;
-        }
         if(count == 1)
         {
             ptr2 = ptr;
@@ -178,6 +179,7 @@ int BinFilesReader::BackupMRFile(FAndP* fap)
             *ptr2 = '/';            
             break;
         }
+        }
     }
     //备份MR
     sprintf(backupDir, "%s/%s",GlobalConfiger::GetInstance()->GetBackupDir().c_str(),dayAndHourDir);
@@ -186,12 +188,12 @@ int BinFilesReader::BackupMRFile(FAndP* fap)
         int ret = F_MakeDirs(backupDir, 1);
         if(ret != 0)
         {
-            LOG_ERROR("[BinFilesReader]输出目录: %s创建失败， 请检查！errno = %d\n", backupDir, ret);
+            LOG_ERROR("[BinFilesReader]备份目录: %s创建失败， 请检查！errno = %d\n", backupDir, ret);
             return -1;
         }
     }
     sprintf(dstFile, "%s/%s", backupDir, name);
-    rename(fap->file, dstFile); 
+    RANAME(fap->file, dstFile); 
     return 0;
 }
 int BinFilesReader::Backup()
@@ -205,7 +207,7 @@ int BinFilesReader::Backup()
     }
     return 0;
 }
-//场景文件只做rename
+//场景文件只做RANAME
 int BinFilesReader::MoveScenceFile(FAndP* fap)
 {
     if(fap->p != NULL)delete[]fap->p;
@@ -242,7 +244,7 @@ int BinFilesReader::MoveScenceFile(FAndP* fap)
         }
     }
      sprintf(dstName, "%s/%s", dstDir ,name);
-     rename(srcName, dstName);
+     RANAME(srcName, dstName);
     return 0;
 }
 //写MR文件
@@ -252,7 +254,7 @@ int BinFilesReader::WriteMRFile(FAndP* fap)
     char outDir[512] = "";
     char dayAndHourDir[64] = "";
     char name[32] = "";
-    char *ptr = strrchr(fap->file, '/');
+    char *ptr = fap->file + strlen(fap->file) - 1;
     char *ptr2 = ptr;
    //拆分文件路径特征
     int count = 0;    
@@ -260,9 +262,10 @@ int BinFilesReader::WriteMRFile(FAndP* fap)
     {
         if(*ptr == '/')
         {
+            
+            if(ptr != fap->file + strlen(fap->file) - 1 && *(ptr + 1) != '/')
             ++count;
-        }
-        if(count == 1)
+            if(count == 1)
         {
             ptr2 = ptr;
             *ptr = 0;               
@@ -270,8 +273,11 @@ int BinFilesReader::WriteMRFile(FAndP* fap)
         }
         else if(count == 4)
         {
-            strcpy(dayAndHourDir, ptr + 1);
+            strcpy(dayAndHourDir, ptr + 1);            
+    *ptr2 = '/';
             break;
+        }
+        
         }
     }
     //写mr文件
@@ -302,7 +308,7 @@ int BinFilesReader::WriteMRFile(FAndP* fap)
         outfile.close();
     }
     if(fap->p!=NULL)delete[]fap->p;
-    rename(tarFilenameTmp, outFile);
+    RANAME(tarFilenameTmp, outFile);
     
     //备份MR
     sprintf(outDir, "%s/%s",GlobalConfiger::GetInstance()->GetBackupDir().c_str(),dayAndHourDir);
@@ -317,7 +323,7 @@ int BinFilesReader::WriteMRFile(FAndP* fap)
     }
     sprintf(outFile, "%s/%s", outDir, name);
     *ptr2 = '/';
-    rename(fap->file, outFile);    
+    RANAME(fap->file, outFile);    
     
     return 0;
 }
@@ -337,16 +343,17 @@ int BinFilesReader::WriteOneFile(FAndP* fap, int flag)
     return 0;
 }
 //写文件
-int BinFilesReader::WriteFiles()
+int BinFilesReader::WriteFiles(OutStatistics& ossDay)
 {
-    int ret = opcsv.OutputCsv(this->m_pFiles);
+    LOG_NOTICE("[BinFilesReader][日期%s,组号%s]CSV文件开始输出", m_pFiles->day, m_pFiles->imsiGroup);
+    int ret = opcsv.OutputCsv(this->m_pFiles, ossDay);
     
     if(ret <= 0)
     {
-        LOG_ERROR("[Assoc][日期%s,组号%s]CSV文件输出结束,输出成功条数[%d]", m_pFiles->day, m_pFiles->imsiGroup, ret);
+        LOG_ERROR("[BinFilesReader][日期%s,组号%s]CSV文件输出结束,输出成功条数[%d]", m_pFiles->day, m_pFiles->imsiGroup, ret);
         return ret;
     }
-    LOG_NOTICE("[Assoc][日期%s,组号%s]CSV文件输出结束,输出成功条数[%d]", m_pFiles->day, m_pFiles->imsiGroup, ret);
+    LOG_NOTICE("[BinFilesReader][日期%s,组号%s]CSV文件输出结束,输出成功条数[%d]", m_pFiles->day, m_pFiles->imsiGroup, ret);
     /**
     WriteOneFile(&m_pFiles->ScenceFile, 0);
     

@@ -60,7 +60,8 @@ int ThreadManager::Start()
     LOG_NOTICE("[FileHandleProc]启动%d个线程", m_ithreadNum);
     return 0;
 }
-unsigned iDealing = 0;
+int iDealing = 0;
+bool bStart = false;
 
 THREAD_RETURN THREAD_PROC FileHandleProc(THREAD_PARAM param)
 {
@@ -69,6 +70,7 @@ THREAD_RETURN THREAD_PROC FileHandleProc(THREAD_PARAM param)
     AssocFiles files;
     Assoc assoc;
     assoc.Init();
+    int empnum = 0;
     while (threadflag)
     {
         CPO_Enter(pParam->m_cpo_qFileslist);
@@ -76,18 +78,28 @@ THREAD_RETURN THREAD_PROC FileHandleProc(THREAD_PARAM param)
         {//检查m_qFilelist队列，如果为空，休息五秒，否则取出来一个文件进行处理
             pParam->GetFileList();
             if (pParam->m_qFileslist.empty())
-            {
+            {                
                 //如果存在结束标志文件，认为处理完了。
                 //等到全部线程结束，处理剩余mr文件
-                if (iDealing == 0 && F_IsPathExist((char*) GlobalConfiger::GetInstance()->GetUMultiScenceEndBatchFile().c_str()))
+                if (iDealing <= 0 && bStart == true && F_IsPathExist((char*) GlobalConfiger::GetInstance()->GetUMultiScenceEndBatchFile().c_str()))
                 {
-                    //pParam->BackupMRFiles();
-                    pParam->MvMRFiles();                    
-                    pParam->m_setDealing.clear();
-                    //删除结束标志文件
-                    remove((char*) GlobalConfiger::GetInstance()->GetUMultiScenceEndBatchFile().c_str());
-                    //分割日志增加日期+时间戳    
-                    pParam->SpliteLogFile();
+                    empnum++;
+                    if(empnum>60)
+                    {
+                        empnum = 0;
+                        LOG_NOTICE("所有文件处理结束");
+                        bStart = false;
+                        //pParam->BackupMRFiles();
+                        pParam->MvMRFiles();                    
+                        pParam->m_setDealing.clear();
+                        pParam->m_mapOssDay.clear();
+                        //分割日志增加日期+时间戳    
+                        sleep(60);
+                        pParam->SpliteLogFile();
+                        //删除结束标志文件
+                        remove((char*) GlobalConfiger::GetInstance()->GetUMultiScenceEndBatchFile().c_str());
+                        sleep(1);
+                    }
                 }
             }
             CPO_Leave(pParam->m_cpo_qFileslist);
@@ -96,21 +108,44 @@ THREAD_RETURN THREAD_PROC FileHandleProc(THREAD_PARAM param)
         }
         else
         {
+            bStart = true;
             ++iDealing;
             files = pParam->m_qFileslist.front();
             pParam->m_qFileslist.pop();
             string tmps = "";
             string tmpname = tmps + files.ScenceFile.file + DEALING_TMP_STRING;
-            rename(files.ScenceFile.file, tmpname.c_str());
+            RANAME(files.ScenceFile.file, tmpname.c_str());
 
             CPO_Leave(pParam->m_cpo_qFileslist);
             sleep(0);
 
             LOG_NOTICE("[Assoc]开始处理文件:%s", files.ScenceFile.file);
+            printf("[Assoc]开始处理文件:%s\n", files.ScenceFile.file);
             assoc.SetFiles(files);
-            assoc.Process();
+            OutStatistics ossDay;
+            assoc.Process(ossDay);
 
             CPO_Enter(pParam->m_cpo_qFileslist);
+            //打印指标
+            string tmpDay;
+            tmpDay.assign(files.day);
+            std::MAP<std::string, OutStatistics>::iterator it_mapOssDay = pParam->m_mapOssDay.find(tmpDay);
+            if(it_mapOssDay != pParam->m_mapOssDay.end())
+            {
+                it_mapOssDay->second.Add(ossDay);
+            }
+            else
+            {
+                it_mapOssDay = pParam->m_mapOssDay.insert(make_pair(tmpDay, ossDay)).first;
+            }
+                    
+            char zhibiaotongji[1024];
+            ossDay.GetString(zhibiaotongji);
+            LOG_NOTICE("[ThreadManager]文件输出:指标统计[日期%s组号%s],http,mme,uemr,uu,total,%s", files.day, files.imsiGroup, zhibiaotongji);      
+            
+            it_mapOssDay->second.GetString(zhibiaotongji);                
+            LOG_NOTICE("[ThreadManager]文件输出:指标统计[总量统计_日期%s],http,mme,uemr,uu,total,%s", files.day, zhibiaotongji);
+            printf("[Assoc]结束处理文件:%s\n", files.ScenceFile.file);
             --iDealing;
             CPO_Leave(pParam->m_cpo_qFileslist);
             sleep(0);
@@ -124,19 +159,19 @@ int ThreadManager::SpliteLogFile()
 {
     char logfile[PATH_MAX] = "";
     char dstfile[PATH_MAX] = "";
-    sprintf(logfile, "%s/AssocMultiScence.acess", GlobalConfiger::GetInstance()->GetLogDir().c_str());
+    sprintf(logfile, "%s/AssocMultiScence.access", GlobalConfiger::GetInstance()->GetLogDir().c_str());
     time_t now = time(0);
     int dnow = now;
     tm tm1 = {0};
     localtime_r(&now, &tm1);
     char day[16];
     strftime(day, sizeof(day) ,"%Y%m%d", &tm1);
-    sprintf(dstfile, "%s/AssocMultiScence_%s_%d.acess", GlobalConfiger::GetInstance()->GetLogDir().c_str(), day, dnow);
-    rename(logfile, dstfile);    
+    sprintf(dstfile, "%s/AssocMultiScence_%s_%d.access", GlobalConfiger::GetInstance()->GetLogDir().c_str(), day, dnow);
+    RANAME(logfile, dstfile);    
     
     sprintf(logfile, "%s/AssocMultiScence.error", GlobalConfiger::GetInstance()->GetLogDir().c_str());
     sprintf(dstfile, "%s/AssocMultiScence_%s_%d.error", GlobalConfiger::GetInstance()->GetLogDir().c_str(), day, dnow);
-    rename(logfile, dstfile);  
+    RANAME(logfile, dstfile);  
     return 0;
 }
 /*
@@ -181,8 +216,8 @@ int ThreadManager::FindMRFiles(AssocFiles& files)
     
     char mrfilename[16] = "";
     strncpy(mrfilename, filename.c_str() + filename.length() - 10, 6);   
-    
-    strcpy(files.imsiGroup, day.c_str());
+    mrfilename[6] = 0;
+    strcpy(files.imsiGroup, mrfilename);
     
     strcpy(mrfilename + 6, ".bin");
     list<string>::iterator it_m_listInputDir = m_listMRInputDir.begin();
@@ -196,7 +231,7 @@ int ThreadManager::FindMRFiles(AssocFiles& files)
             sprintf(ihour, "%02d", i);
             string mrfullfile = "";
             mrfullfile.append(basedir).append("/").append(day).append("/").append(ihour).append("/").append(mrfilename);
-            if (F_DirIsExist((char*) mrfullfile.c_str()))
+            if (F_IsFileExist((char*) mrfullfile.c_str()))
             {
                 files.MRFiles.push_back(FAndP((char*) mrfullfile.c_str()));
             }
@@ -239,7 +274,7 @@ int ThreadManager::GetChildDir(char * dir, bool bFirstTimeFlag)
                 char sSrcFileFullPathNew[1024];
                 strcpy(sSrcFileFullPathNew, sSrcFileFullPath);
                 sSrcFileFullPathNew[(strlen(sSrcFileFullPath) - 12)] = 0;
-                rename(sSrcFileFullPath, sSrcFileFullPathNew);
+                RANAME(sSrcFileFullPath, sSrcFileFullPathNew);
                 AssocFiles files;
                 strcpy(files.ScenceFile.file, sSrcFileFullPathNew);
                 //根据文件名组号去找MR和UU文件,并且拼在files里
@@ -305,12 +340,10 @@ int ThreadManager::GetMRDayChildDir(char *sSrcFileFullDir)
 
     struct DIR_INFO *hDirInfo;
     struct FILE_INFO hFileInfo;
-
     char sSrcFileFullPath[1024];
     hDirInfo = F_DirOpen((char*) basedir.c_str());
     if (hDirInfo != NULL)
-    {
-
+    {       
         while (F_DirNextItem(hDirInfo, &hFileInfo) == 0)
         {
             if (hFileInfo.sName[0] == '.' || hFileInfo.sName[0] == ' ')
@@ -346,7 +379,6 @@ int ThreadManager::GetMRHourChildDir(char *sSrcFileFullDir)
     hDirInfo = F_DirOpen((char*) basedir.c_str());
     if (hDirInfo != NULL)
     {
-
         while (F_DirNextItem(hDirInfo, &hFileInfo) == 0)
         {
             if (hFileInfo.sName[0] == '.' || hFileInfo.sName[0] == ' ')
@@ -365,12 +397,13 @@ int ThreadManager::GetMRHourChildDir(char *sSrcFileFullDir)
                     --ptr;
                     if (*ptr == '/')
                     {
+                        if(ptr != sSrcFileFullDir + strlen(sSrcFileFullDir) - 1 && *(ptr + 1) != '/')
                         ++count;
-                    }
                     if(count == 3)
                     {
                         strncpy(afs.day, ptr + 1, 8);
                         afs.day[8] = 0;
+                    }
                     }
                 }    
                 afs.MRFiles.push_back(FAndP(sSrcFileFullPath));
@@ -380,9 +413,26 @@ int ThreadManager::GetMRHourChildDir(char *sSrcFileFullDir)
                 BinFilesReader bfr;
                 bfr.Init(&afs);
                 bfr.ReadFiles();
-                bfr.WriteFiles();
+                OutStatistics ossDay;
+                bfr.WriteFiles(ossDay);
                 bfr.Backup();
                 
+                string tmpDay ;
+                tmpDay.assign(afs.day);
+                std::MAP<std::string, OutStatistics>::iterator it_mapOssDay = m_mapOssDay.find(tmpDay);  
+                if(it_mapOssDay != m_mapOssDay.end())
+                {
+                    it_mapOssDay->second.Add(ossDay);
+                }
+                else
+                {
+                    m_mapOssDay.insert(make_pair(tmpDay, ossDay));
+                }
+                char zhibiaotongji[1024];
+                ossDay.GetString(zhibiaotongji);
+                LOG_NOTICE("[ThreadManager]文件输出:指标统计[日期%s组号%s],http,mme,uemr,uu,total,%s", afs.day, afs.imsiGroup, zhibiaotongji);      
+                it_mapOssDay->second.GetString(zhibiaotongji);                
+                LOG_NOTICE("[ThreadManager]文件输出:指标统计[总量统计_日期%s],http,mme,uemr,uu,total,%s", afs.day, zhibiaotongji);
                 continue;
             }
 

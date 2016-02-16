@@ -10,24 +10,19 @@
 
 #include <string>
 #include "DataDefine.h"
-#include <queue>
 #include "AssocFiles.h"
+#include <queue>
 
 class OutPutCSVFiles {
 public:
-
-
-    int OutputCsv(AssocFiles* p);
-
-
-
     OutPutCSVFiles();
-    OutPutCSVFiles(const OutPutCSVFiles& orig);
     virtual ~OutPutCSVFiles();
+    int OutputCsv(AssocFiles* p, OutStatistics& ossDay);
     void SetSOutputDir(std::string sOutputDir);
-    std::string GetSOutputDir() const;
+    std::string GetSOutputDir();
+protected:
+    OutPutCSVFiles(const OutPutCSVFiles& orig);
 private:
-
     std::string m_sOutputDir;
 };
 

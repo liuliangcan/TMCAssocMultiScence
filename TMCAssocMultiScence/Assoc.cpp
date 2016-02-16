@@ -13,17 +13,20 @@
 #include "tools/log.h"
 #include "GlobalConfiger.h"
 #include <unistd.h>
+#include <fstream>
 
 using namespace std;
 
 #define XDR_MME_TAG 5
 #define XDR_HTTP_TAG 11
+#define XDR_UU_TAG 1
+#define XDR_UEMR_TAG 3
 #define TIME_DELAY (GlobalConfiger::GetInstance()->GetIDeviation())
 
 Assoc::Assoc()
 {
     m_p = NULL;
-    
+
 }
 
 Assoc::Assoc(const Assoc& orig)
@@ -31,15 +34,15 @@ Assoc::Assoc(const Assoc& orig)
 }
 
 Assoc::~Assoc()
-{    
+{
     if (m_p != NULL)delete[] m_p;
 }
 
-int Assoc::Process()
+int Assoc::Process(OutStatistics& ossDay)
 {
     //读取文件
     int ret = ReadFiles();
-    if(ret < 0)
+    if (ret < 0)
     {
         LOG_ERROR("[Assoc]读取文件集失败%s", m_pFiles->ScenceFile.file);
         return ret;
@@ -47,20 +50,21 @@ int Assoc::Process()
     //场景关联
     AssocScence();
     //输出文件
-    OutPutFiles();
+    OutPutFiles(ossDay);
     //备份
     Backup();
     return 0;
 }
+
 void Assoc::Backup()
 {
     bfr.Backup();
 }
 //输出文件
 
-int Assoc::OutPutFiles()
+int Assoc::OutPutFiles(OutStatistics& ossDay)
 {
-    bfr.WriteFiles();
+    bfr.WriteFiles(ossDay);
     return 0;
 }
 //场景关联回填
@@ -89,6 +93,11 @@ void Assoc::PScence2PMR(st_XDR_INFO* pReferenceScence, st_RC_XDR_INFO* p)
     memcpy(p->rc_additional_part.sGridID,
            pReferenceScence->additional_part.sGridID,
            sizeof (pReferenceScence->additional_part.sGridID));
+
+    if (p->rc_additional_part.cCellScenceProperties != 6 && p->rc_additional_part.cScenceProperties == 6)
+    {
+        p->rc_additional_part.IsPrivateCell = 1;
+    }
 }
 
 /*
@@ -99,7 +108,7 @@ void Assoc::PScence2PMR(st_XDR_INFO* pReferenceScence, st_RC_XDR_INFO* p)
 void Assoc::findNextRef(unsigned int& i, st_XDR_INFO* &pReferenceScence)
 {
     st_RC_XDR_INFO* p = (st_RC_XDR_INFO*) m_p[i];
-    if (i >= m_xdrsize - 1)return ; //当前就是最后一条，直接跳出
+    if (i >= m_xdrsize - 1)return; //当前就是最后一条，直接跳出
     bool ifChangeReferenceScence = false; //用来记录是否找到基准点
     unsigned int j = i + 1; //从当前记录下一条开始找，由于判断过i不是最后一条，所以不会越界
     for (; j < m_xdrsize; ++j)
@@ -140,7 +149,7 @@ void Assoc::GetScenceIntoMR()
     }
     //如果整个队列遍历结束都没有基准点，则不回填(这里实际上不会发生，因为场景文件不会为空)
     if (pReferenceScence == NULL)return;
-    
+
     for (unsigned int i = 0; i < m_xdrsize; ++i)
     {
         if (((st_XDR_INFO*) m_p[i])->public_part.cInterface == XDR_MME_TAG
@@ -148,7 +157,9 @@ void Assoc::GetScenceIntoMR()
         {
             pReferenceScence = (st_XDR_INFO*) m_p[i];
         }
-        else
+        else if (((st_RC_XDR_INFO*) m_p[i])->public_part.cInterface == XDR_UU_TAG
+                || ((st_RC_XDR_INFO*) m_p[i])->public_part.cInterface == XDR_UEMR_TAG
+                )
         {
             st_RC_XDR_INFO* p = (st_RC_XDR_INFO*) m_p[i];
             if (p->public_part.llImsi == pReferenceScence->public_part.llImsi)
@@ -180,7 +191,6 @@ void Assoc::GetScenceIntoMR()
     }//end for
 }
 
-
 inline bool mycmp(void* a, void * b)
 {
     st_XDR_INFO* x = (st_XDR_INFO*) a;
@@ -194,7 +204,7 @@ inline bool mycmp(void* a, void * b)
         llpImsi = x->public_part.llImsi;
         llpStartTime = x->additional_part.nStartTime;
     }
-    else
+    else //if(x->public_part.cInterface == XDR_UU_TAG || x->public_part.cInterface == XDR_UEMR_TAG)
     {
         st_RC_XDR_INFO* p = (st_RC_XDR_INFO*) a;
         llpImsi = p->public_part.llImsi;
@@ -205,7 +215,7 @@ inline bool mycmp(void* a, void * b)
         llqImsi = y->public_part.llImsi;
         llqStartTime = y->additional_part.nStartTime;
     }
-    else
+    else// if(y->public_part.cInterface == XDR_UU_TAG || y->public_part.cInterface == XDR_UEMR_TAG)
     {
         st_RC_XDR_INFO* q = (st_RC_XDR_INFO*) b;
         llqImsi = q->public_part.llImsi;
@@ -244,19 +254,41 @@ int Assoc::InitPofXDR()
     }
     if (m_p == NULL && retry == 0)
     {
-        LOG_ERROR("[Assoc]排序指针内存申请错误,大小%u[日期%s,组号%s]", m_xdrsize , m_pFiles->day, m_pFiles->imsiGroup);
+        LOG_ERROR("[Assoc]排序指针内存申请错误,大小%u[日期%s,组号%s]", m_xdrsize, m_pFiles->day, m_pFiles->imsiGroup);
         return -1;
     }
     unsigned int pIndex = 0;
     for (unsigned int i = 0; i < m_pFiles->ScenceFile.num; ++i, ++pIndex)
     {
-        m_p[pIndex] = (st_XDR_INFO*) (m_pFiles->ScenceFile.p) + i;
+        st_XDR_INFO* pXDR = (st_XDR_INFO*) m_pFiles->ScenceFile.p + i;
+        if (pXDR->public_part.cInterface == XDR_MME_TAG
+                || pXDR->public_part.cInterface == XDR_HTTP_TAG)
+        {
+            m_p[pIndex] = pXDR;
+        }
+        else
+        {
+            LOG_ERROR("[Assoc]排序数组初始化:硬采数据错误，interface=%d,行号=%d,XDRID=%s,文件:%s", pXDR->public_part.cInterface,
+                      i, pXDR->public_part.XdrId, m_pFiles->ScenceFile.file);
+            --m_xdrsize;
+        }
     }
     for (it_lst = m_pFiles->MRFiles.begin(); it_lst != it_lst_end; ++it_lst)
     {
         for (unsigned int i = 0; i < it_lst->num; ++i, ++pIndex)
         {
-            m_p[pIndex] = ((st_RC_XDR_INFO*) (m_pFiles->ScenceFile.p) + i);
+            st_RC_XDR_INFO* pXDR = (st_RC_XDR_INFO*) it_lst->p + i;
+            if (pXDR->public_part.cInterface == XDR_UU_TAG
+                    || pXDR->public_part.cInterface == XDR_UEMR_TAG)
+            {
+                m_p[pIndex] = pXDR;
+            }
+            else
+            {
+                LOG_ERROR("[Assoc]排序数组初始化:软采数据错误，interface=%d,行号=%d,XDRID=%s,文件:%s", pXDR->public_part.cInterface,
+                          i, pXDR->public_part.XdrId, it_lst->file);
+                --m_xdrsize;
+            }
         }
     }
 
@@ -268,7 +300,7 @@ int Assoc::ReadFiles()
 {
     int ret = bfr.ReadFiles();
     if (ret < 0)
-    {        
+    {
         LOG_ERROR("[Assoc]文件集读取失败[日期%s,组号%s]", m_pFiles->day, m_pFiles->imsiGroup);
         return -1;
     }

@@ -57,7 +57,12 @@ struct CPO { pthread_mutex_t m; pthread_t t;};
 	break; \
 }
 #define CPO_Leave(_x)	{ pthread_mutex_unlock(&_x.m); _x.t=0; }
-
+#define RANAME(_x, _y) if(rename(_x, _y) != 0)\
+{\
+char s_Cmd[4098] = "";\
+sprintf(s_Cmd, "mv -f %s %s", _x, _y);\
+system(s_Cmd);\
+}
 #endif
 
 typedef THREAD_RETURN THREAD_PROC THREAD_FUNCTION(THREAD_PARAM thread_param);

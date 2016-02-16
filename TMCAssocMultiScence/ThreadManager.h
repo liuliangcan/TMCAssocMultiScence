@@ -66,6 +66,8 @@ private:
 
     //文件列表锁
     CPO m_cpo_qFileslist;
+    
+    std::MAP<std::string, OutStatistics> m_mapOssDay;
 
     //读取文件列表
     int GetFileList();

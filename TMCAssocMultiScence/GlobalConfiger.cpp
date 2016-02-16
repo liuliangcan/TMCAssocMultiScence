@@ -47,7 +47,8 @@ std::string GlobalConfiger::GetScenceInputDir() const
 
 void GlobalConfiger::GetListMRInputDir(std::list<std::string>&_list) const
 {
-    _list =  m_listMRInputDir;
+    //_list.insert(m_listMRInputDir.begin(), m_listMRInputDir.end());
+    std::copy(m_listMRInputDir.begin(), m_listMRInputDir.end(), std::back_inserter(_list));
 }
 
 int GlobalConfiger::GetIDeviation() const

@@ -25,7 +25,7 @@ public:
     //读文件
     int ReadFiles();    
     //写文件
-    int WriteFiles();
+    int WriteFiles(OutStatistics& ossDay);
     //备份
     int Backup();
     

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configurationDescriptor version="95">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="lib" displayName="lib" projectFiles="true">
+      <itemPath>lib/libTransformCsvInterFace.so</itemPath>
+      <itemPath>lib/libTransformCsvInterFace_debug.so</itemPath>
+    </logicalFolder>
     <logicalFolder name="tools" displayName="tools" projectFiles="true">
       <itemPath>tools/Markup.cpp</itemPath>
       <itemPath>tools/Markup.h</itemPath>
@@ -31,7 +35,6 @@
       <itemPath>BinFilesReader.cpp</itemPath>
       <itemPath>FilesMemoryManager.cpp</itemPath>
       <itemPath>GlobalConfiger.cpp</itemPath>
-      <itemPath>OutPutCSVFiles.cpp</itemPath>
       <itemPath>ThreadManager.cpp</itemPath>
       <itemPath>main.cpp</itemPath>
     </logicalFolder>
@@ -52,6 +55,7 @@
   </logicalFolder>
   <sourceRootList>
     <Elem>tools</Elem>
+    <Elem>lib</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -62,9 +66,14 @@
         <rebuildPropChanged>false</rebuildPropChanged>
       </toolsSet>
       <compileType>
+        <ccTool>
+          <standard>8</standard>
+          <commandLine>-lglog</commandLine>
+        </ccTool>
         <linkerTool>
           <linkerLibItems>
             <linkerLibStdlibItem>PosixThreads</linkerLibStdlibItem>
+            <linkerLibFileItem>lib/libTransformCsvInterFace_debug.so</linkerLibFileItem>
           </linkerLibItems>
         </linkerTool>
       </compileType>
@@ -90,13 +99,18 @@
       </item>
       <item path="GlobalConfiger.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="OutPutCSVFiles.cpp" ex="false" tool="1" flavor2="0">
-      </item>
       <item path="OutPutCSVFiles.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="ThreadManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="ThreadManager.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="lib/libTransformCsvInterFace.so" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="lib/libTransformCsvInterFace_debug.so"
+            ex="false"
+            tool="3"
+            flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -139,6 +153,8 @@
         </cTool>
         <ccTool>
           <developmentMode>5</developmentMode>
+          <standard>8</standard>
+          <commandLine>-lglog</commandLine>
         </ccTool>
         <fortranCompilerTool>
           <developmentMode>5</developmentMode>
@@ -146,6 +162,12 @@
         <asmTool>
           <developmentMode>5</developmentMode>
         </asmTool>
+        <linkerTool>
+          <linkerLibItems>
+            <linkerLibStdlibItem>PosixThreads</linkerLibStdlibItem>
+            <linkerLibFileItem>lib/libTransformCsvInterFace.so</linkerLibFileItem>
+          </linkerLibItems>
+        </linkerTool>
       </compileType>
       <item path="Assoc.cpp" ex="false" tool="1" flavor2="0">
       </item>
@@ -169,13 +191,18 @@
       </item>
       <item path="GlobalConfiger.h" ex="false" tool="3" flavor2="0">
       </item>
-      <item path="OutPutCSVFiles.cpp" ex="false" tool="1" flavor2="0">
-      </item>
       <item path="OutPutCSVFiles.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="ThreadManager.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="ThreadManager.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="lib/libTransformCsvInterFace.so" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="lib/libTransformCsvInterFace_debug.so"
+            ex="false"
+            tool="3"
+            flavor2="0">
       </item>
       <item path="main.cpp" ex="false" tool="1" flavor2="0">
       </item>

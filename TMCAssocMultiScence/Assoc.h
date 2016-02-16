@@ -23,7 +23,7 @@ public:
     }
 
     //处理
-    int Process();
+    int Process(OutStatistics& ossDay);
 
     //设置文件集
     int SetFiles(AssocFiles& files);
@@ -46,7 +46,7 @@ private:
     //进行回填
     void GetScenceIntoMR();
     //输出文件
-    int OutPutFiles();
+    int OutPutFiles(OutStatistics& ossDay);
 
     //备份文件
     void Backup();
